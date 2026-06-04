@@ -1,65 +1,83 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { getDashboardStats } from "@/services/dashboard";
+import type { DashboardStats } from "@/types";
+import { DashboardShell } from "@/components/layout/DashboardShell";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { LoadingBlock } from "@/components/ui/LoadingBlock";
+
+export default function DashboardPage() {
+  const [data, setData] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getDashboardStats()
+      .then(setData)
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "載入失敗"),
+      )
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <DashboardShell
+      title="儀表板"
+      subtitle="Firebase 開發版 · 與 GAS 穩定版完全隔離"
+    >
+      {loading ? <LoadingBlock label="讀取 Firestore 統計…" /> : null}
+      {error ? <ErrorBanner message={error} /> : null}
+      {data ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <StatCard
+            title="座位表 / 分組"
+            ok={data.groupCount > 0}
+            lines={[
+              `分組數：${data.groupCount}`,
+              `學生總數：${data.studentCount}`,
+            ]}
+          />
+          <StatCard
+            title="題庫"
+            ok={data.questionTotal >= 0}
+            lines={[
+              `總題數：${data.questionTotal}`,
+              `已審 ${data.questionApproved} · 待審 ${data.questionPending}`,
+            ]}
+          />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      ) : null}
+    </DashboardShell>
+  );
+}
+
+function StatCard({
+  title,
+  ok,
+  lines,
+}: {
+  title: string;
+  ok: boolean;
+  lines: string[];
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-slate-900">{title}</h3>
+        <span
+          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+            ok ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+          }`}
+        >
+          {ok ? "有資料" : "待匯入"}
+        </span>
+      </div>
+      <ul className="mt-3 space-y-1 text-sm text-slate-600">
+        {lines.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
     </div>
   );
 }

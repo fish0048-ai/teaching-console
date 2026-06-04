@@ -1,0 +1,42 @@
+{
+  "groups": [
+    {
+      "id": "demo-501",
+      "name": "501 名單",
+      "sheetLabel": "501名單",
+      "students": [
+        { "group": "501", "class": "501", "number": "1", "name": "王小明" },
+        { "group": "501", "class": "501", "number": "2", "name": "陳小華" },
+        { "group": "501", "class": "501", "number": "3", "name": "林小美" },
+        { "group": "501", "class": "502", "number": "1", "name": "張大同" }
+      ],
+      "seating": {
+        "rows": 2,
+        "cols": 2,
+        "blocked": [],
+        "fixedSeats": {},
+        "assignments": {
+          "0,0": { "group": "501", "class": "501", "number": "1", "name": "王小明" },
+          "0,1": { "group": "501", "class": "501", "number": "2", "name": "陳小華" },
+          "1,0": { "group": "501", "class": "501", "number": "3", "name": "林小美" },
+          "1,1": { "group": "501", "class": "502", "number": "1", "name": "張大同" }
+        }
+      }
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q-DEMO-001",
+      "subject": "自然",
+      "grade": "五年級",
+      "unit": "單元一",
+      "type": "選擇題",
+      "difficulty": "易",
+      "stem": "下列何者為正確描述？",
+      "options": { "A": "選項甲", "B": "選項乙", "C": "選項丙", "D": "選項丁" },
+      "answer": "A",
+      "reviewStatus": "已審",
+      "source": "demo-import"
+    }
+  ]
+}

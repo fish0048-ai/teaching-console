@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 教學主控台（B 路線 · 開發版）
 
-## Getting Started
+Next.js + Firebase + Vercel + GitHub。  
+**與 GAS 穩定版（Google 協作平台）完全隔離**，不讀寫既有試算表。
 
-First, run the development server:
+Firebase 專案：`chunhsin-b2a9d`
+
+---
+
+## 目錄結構
+
+```
+teaching-console/
+├── .env.example              # 前端 Firebase 設定範本
+├── .env.import.example       # 匯入腳本設定範本
+├── firestore.rules
+├── scripts/
+│   ├── import-to-firestore.ts
+│   └── sample-data/import.json
+└── src/
+    ├── app/                  # App Router 頁面
+    ├── components/           # UI 元件
+    ├── hooks/                # useStudents, useAsyncQuery
+    ├── lib/
+    │   ├── firebase.ts       # Client SDK 初始化
+    │   └── env.ts
+    ├── services/             # Firestore 資料邏輯（只讀）
+    └── types/                # 型別定義
+```
+
+---
+
+## 快速開始
+
+### 1. 環境變數
+
+```bash
+cp .env.example .env.local
+# 到 Firebase Console → 專案設定 → 一般 → 您的應用程式 → 設定
+# 複製 Web API Key、App ID 等填入 .env.local
+```
+
+### 2. 部署 Firestore 規則（可選）
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+或在 Console 貼上 `firestore.rules` 內容。
+
+### 3. 匯入測試資料
+
+```bash
+cp .env.import.example .env.import
+# 下載服務帳戶 JSON → scripts/service-account.json
+
+npm run import:firestore
+```
+
+### 4. 啟動本機
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+開啟 http://localhost:3000 → **座位表** 可看到 Firestore 學生名單。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## GitHub 獨立 Repo
 
-## Learn More
+```bash
+cd f:\location\teaching-console
+git remote add origin https://github.com/你的帳號/teaching-console.git
+git push -u origin master
+```
 
-To learn more about Next.js, take a look at the following resources:
+Vercel：Import 此 repo，設定 Production 環境變數（`NEXT_PUBLIC_*`）。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 與 A 版（穩定版）的隔離
 
-## Deploy on Vercel
+| 項目 | A 版 | B 版（本專案） |
+|------|------|----------------|
+| 後端 | GAS + Sheets | Firebase Firestore |
+| 程式 | `f:\location\apps-script` | `f:\location\teaching-console` |
+| 部署 | clasp / 協作平台 | GitHub → Vercel |
+| 資料 | 試算表 ID | Firestore 集合 |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+匯入腳本僅讀取本機 JSON，**不呼叫 GAS、不修改試算表**。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 後續擴充（尚未實作）
+
+- [ ] 加分寫入 Firestore
+- [ ] Auth 登入（教師帳號）
+- [ ] 題庫 Word 匯入 → Firestore
+- [ ] prod Firebase 專案 + Vercel Production

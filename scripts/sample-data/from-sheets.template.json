@@ -1,0 +1,22 @@
+/**
+ * 從試算表匯出的 JSON 格式範本（手動或腳本產生後再 import）
+ *
+ * 欄位對照（名單分頁 A:D）：
+ *   group  ← 第 1 欄（分組）
+ *   class  ← 第 2 欄（班級）
+ *   number ← 第 3 欄（座號）
+ *   name   ← 第 4 欄（姓名）
+ */
+{
+  "groups": [
+    {
+      "id": "501-mingdan",
+      "name": "501 名單",
+      "sheetLabel": "501名單",
+      "students": [
+        { "group": "501", "class": "501", "number": "1", "name": "範例學生" }
+      ]
+    }
+  ],
+  "questions": []
+}

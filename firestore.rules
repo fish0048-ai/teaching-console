@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// 開發階段：允許讀取；寫入僅限 Admin SDK（匯入腳本）
+// 上線前請改為 Auth 驗證 + 角色權限
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /groups/{groupId} {
+      allow read: if true;
+      allow write: if false;
+
+      match /students/{studentId} {
+        allow read: if true;
+        allow write: if false;
+      }
+
+      match /seating/{docId} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+
+    match /questions/{questionId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
