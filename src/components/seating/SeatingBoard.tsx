@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getSeatingState } from "@/services/students";
 import type { SeatingState, Student } from "@/types";
 import { useGroups, useStudents } from "@/hooks/useStudents";
+import { formatFirebaseError } from "@/lib/firebase-errors";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { LoadingBlock } from "@/components/ui/LoadingBlock";
 import { StudentList } from "./StudentList";
@@ -65,6 +66,7 @@ export function SeatingBoard() {
   const cols = seating?.cols ?? 7;
   const loading = groupsLoading;
   const error = groupsError || studentsError;
+  const displayError = error ? formatFirebaseError(new Error(error)) : null;
 
   if (loading && !groups) {
     return <LoadingBlock label="連線 Firebase…" />;
@@ -72,7 +74,7 @@ export function SeatingBoard() {
 
   return (
     <div className="space-y-4">
-      {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
+      {displayError ? <ErrorBanner message={displayError} onRetry={reload} /> : null}
 
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
         <label className="text-sm font-medium text-slate-600">分組</label>

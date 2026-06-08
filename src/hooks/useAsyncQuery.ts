@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { formatFirebaseError } from "@/lib/firebase-errors";
 
 type AsyncState<T> = {
   data: T | null;
@@ -24,7 +25,7 @@ export function useAsyncQuery<T>(
       const data = await loader();
       setState({ data, loading: false, error: null });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "載入失敗";
+      const message = formatFirebaseError(err);
       setState({ data: null, loading: false, error: message });
     }
   }, [loader]);

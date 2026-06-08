@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "import:firestore": "tsx scripts/import-to-firestore.ts"
+    "import:firestore": "tsx scripts/import-to-firestore.ts",
+    "test:firebase": "tsx scripts/test-firestore.ts"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",

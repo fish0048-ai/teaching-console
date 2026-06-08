@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getDashboardStats } from "@/services/dashboard";
 import type { DashboardStats } from "@/types";
+import { formatFirebaseError } from "@/lib/firebase-errors";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { LoadingBlock } from "@/components/ui/LoadingBlock";
@@ -15,9 +16,7 @@ export default function DashboardPage() {
   useEffect(() => {
     getDashboardStats()
       .then(setData)
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "載入失敗"),
-      )
+      .catch((err) => setError(formatFirebaseError(err)))
       .finally(() => setLoading(false));
   }, []);
 
