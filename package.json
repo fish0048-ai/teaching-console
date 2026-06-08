@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "import:firestore": "tsx scripts/import-to-firestore.ts",
+    "import:students": "tsx scripts/import-to-firestore.ts --file=scripts/sample-data/student-list.json",
     "test:firebase": "tsx scripts/test-firestore.ts"
   },
   "dependencies": {

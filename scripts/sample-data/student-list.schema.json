@@ -1,0 +1,8 @@
+{
+  "id": "你的分組-id",
+  "name": "顯示名稱（例：501 名單）",
+  "sheetLabel": "501名單",
+  "students": [
+    { "group": "501", "class": "501", "number": "1", "name": "姓名" }
+  ]
+}
