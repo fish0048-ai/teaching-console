@@ -62,3 +62,18 @@ export type DashboardStats = {
   questionApproved: number;
   questionPending: number;
 };
+
+/** 作業項目（Firestore groups/{id}/homework/state） */
+export type HomeworkAssignment = {
+  id: string;
+  title: string;
+  date?: string;
+  createdAt: string;
+};
+
+export type HomeworkState = {
+  assignments: HomeworkAssignment[];
+  /** studentKey (班級_座號) → assignmentId → 已繳交 */
+  submissions: Record<string, Record<string, boolean>>;
+  updatedAt?: string;
+};

@@ -17,6 +17,12 @@ service cloud.firestore {
         allow read: if true;
         allow write: if false;
       }
+
+      // 作業表：開發階段允許前端寫入；上線前改 Auth
+      match /homework/{docId} {
+        allow read: if true;
+        allow write: if true;
+      }
     }
 
     match /questions/{questionId} {

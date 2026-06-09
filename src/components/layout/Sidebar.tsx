@@ -6,6 +6,7 @@ import { EnvBadge } from "./EnvBadge";
 
 const NAV = [
   { href: "/", label: "儀表板", icon: "📊" },
+  { href: "/homework", label: "作業表", icon: "📝" },
   { href: "/seating", label: "座位表", icon: "🪑" },
   { href: "/question-bank", label: "題庫管理", icon: "📚" },
 ];
