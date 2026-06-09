@@ -12,6 +12,7 @@
     "lint": "eslint",
     "import:firestore": "tsx scripts/import-to-firestore.ts",
     "import:students": "tsx scripts/import-to-firestore.ts --file=scripts/sample-data/student-list.json",
+    "import:sheets": "tsx scripts/import-from-sheets.ts",
     "test:firebase": "tsx scripts/test-firestore.ts"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "firebase-admin": "^13.10.0",
+    "googleapis": "^173.0.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"
