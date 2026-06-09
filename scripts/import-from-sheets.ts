@@ -1,24 +1,21 @@
 /**
  * 從 Google 試算表匯入名單 + 座位表 → Firestore
  *
- * 試算表（A 版穩定版，唯讀）：
+ * 試算表（A 版，唯讀）：
  *   https://docs.google.com/spreadsheets/d/1GzToDiDVuLfDZ4Y67BABloyaldCgqv1zwtoT7UNJnYs
  *
- * 前置：
- *   1. 將試算表「共用」給服務帳戶（檢視者即可）：
- *      firebase-adminsdk-fbsvc@chunhsin-b2a9d.iam.gserviceaccount.com
- *   2. .env.import 設定 SPREADSHEET_ID
- *
- * 使用：
+ * 使用公開 gviz 匯出（不需啟用 Sheets API）：
  *   npm run import:sheets
  *   npm run import:sheets -- --sheet=801A名單
+ *
+ * 可選 .env.import：
+ *   SPREADSHEET_ID=...
+ *   ROSTER_SHEETS=801A名單,804A名單,806B名單
  */
 
 import { config } from "dotenv";
 import { resolve } from "node:path";
-import { google } from "googleapis";
 import {
-  getServiceAccountPath,
   importGroupsToFirestore,
   initAdmin,
   normalizeGroup,
@@ -31,8 +28,8 @@ import {
 config({ path: resolve(process.cwd(), ".env.import") });
 
 const DEFAULT_SPREADSHEET_ID = "1GzToDiDVuLfDZ4Y67BABloyaldCgqv1zwtoT7UNJnYs";
+const DEFAULT_ROSTER_SHEETS = ["801A名單", "804A名單", "806B名單"];
 
-/** 與 apps-script/Utils.gs detectHeaderRow 相同邏輯 */
 function detectHeaderRow(rows: string[][]): number {
   for (let i = 0; i < Math.min(4, rows.length); i++) {
     const textCount = rows[i].filter((v) => {
@@ -97,83 +94,82 @@ function parseSeatingMap(
   return map;
 }
 
-async function createSheetsClient() {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: getServiceAccountPath(),
-    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-  });
-  return google.sheets({ version: "v4", auth });
+function cellValue(cell: { v?: unknown; f?: string } | null): string {
+  if (!cell || cell.v == null || cell.v === "") return "";
+  if (typeof cell.v === "string") return cell.v;
+  if (typeof cell.v === "number") return String(cell.v);
+  return String(cell.f ?? cell.v);
 }
 
-async function fetchSheetValues(
-  sheets: ReturnType<typeof google.sheets>,
-  spreadsheetId: string,
-  sheetTitle: string,
-  rangeCols = "A:E",
-) {
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `'${sheetTitle.replace(/'/g, "''")}'!${rangeCols}`,
-  });
-  return (res.data.values ?? []) as string[][];
-}
-
-async function listSheetTitles(
-  sheets: ReturnType<typeof google.sheets>,
-  spreadsheetId: string,
-) {
-  const meta = await sheets.spreadsheets.get({
-    spreadsheetId,
-    fields: "sheets.properties.title",
-  });
-  return (
-    meta.data.sheets
-      ?.map((s) => s.properties?.title)
-      .filter((t): t is string => Boolean(t)) ?? []
+function parseGvizResponse(text: string): string[][] {
+  const match = text.match(/setResponse\(([\s\S]+)\)\s*;?\s*$/);
+  if (!match) throw new Error("無法解析試算表 gviz 回應");
+  const payload = JSON.parse(match[1]) as {
+    table?: { rows?: Array<{ c?: Array<{ v?: unknown; f?: string } | null> }> };
+  };
+  return (payload.table?.rows ?? []).map((row) =>
+    (row.c ?? []).map((cell) => cellValue(cell)),
   );
+}
+
+async function fetchGvizSheet(
+  spreadsheetId: string,
+  sheetName: string,
+): Promise<string[][]> {
+  const url =
+    `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq` +
+    `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`讀取分頁「${sheetName}」失敗（HTTP ${res.status}）`);
+  }
+  return parseGvizResponse(await res.text());
+}
+
+function resolveRosterSheets(onlySheet?: string): string[] {
+  if (onlySheet) return [onlySheet];
+
+  const fromEnv = process.env.ROSTER_SHEETS?.trim();
+  if (fromEnv) {
+    return fromEnv.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  return DEFAULT_ROSTER_SHEETS;
 }
 
 async function loadFromSpreadsheet(
   spreadsheetId: string,
   onlySheet?: string,
 ): Promise<ImportGroup[]> {
-  const sheets = await createSheetsClient();
-  const titles = await listSheetTitles(sheets, spreadsheetId);
-
-  let rosterSheets = titles.filter((t) => t.endsWith("名單"));
-  if (onlySheet) {
-    rosterSheets = rosterSheets.filter((t) => t === onlySheet);
-    if (!rosterSheets.length) {
-      throw new Error(`找不到名單分頁：${onlySheet}（現有：${titles.join("、")}）`);
-    }
-  }
-
-  if (!rosterSheets.length) {
-    throw new Error("試算表中沒有以「名單」結尾的分頁");
-  }
-
+  const rosterSheets = resolveRosterSheets(onlySheet);
   console.log(`名單分頁：${rosterSheets.join("、")}`);
+  console.log("讀取方式：試算表公開 gviz 匯出（唯讀）");
 
   let seatingMap = new Map<string, Record<string, unknown>>();
-  if (titles.includes("座位表")) {
-    const seatingRows = await fetchSheetValues(
-      sheets,
-      spreadsheetId,
-      "座位表",
-      "A:C",
-    );
+  try {
+    const seatingRows = await fetchGvizSheet(spreadsheetId, "座位表");
     seatingMap = parseSeatingMap(seatingRows);
     console.log(`座位表：${seatingMap.size} 組已儲存配置`);
-  } else {
-    console.warn("  ⚠ 找不到「座位表」分頁，僅匯入學生名單");
+  } catch (err) {
+    console.warn(
+      "  ⚠ 無法讀取「座位表」：",
+      err instanceof Error ? err.message : err,
+    );
   }
 
   const groups: ImportGroup[] = [];
 
   for (const sheetName of rosterSheets) {
-    const rows = await fetchSheetValues(sheets, spreadsheetId, sheetName);
+    console.log(`  → 讀取 ${sheetName}…`);
+    const rows = await fetchGvizSheet(spreadsheetId, sheetName);
     const students = parseStudentsFromSheet(rows, sheetName);
     const seating = seatingMap.get(sheetName);
+
+    if (seating) {
+      console.log(`     ✓ 含座位配置`);
+    } else {
+      console.log(`     · 無座位配置（名單仍會匯入）`);
+    }
 
     groups.push(
       normalizeGroup({
@@ -207,7 +203,7 @@ async function main() {
   const result = await importGroupsToFirestore(db, groups);
 
   printImportReport({
-    source: `Google Sheets (${spreadsheetId})`,
+    source: `Google Sheets gviz (${spreadsheetId})`,
     databaseId,
     ...result,
     questionCount: 0,
@@ -215,12 +211,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  const msg = err instanceof Error ? err.message : String(err);
-  console.error("\n匯入失敗：", msg);
-  if (msg.includes("403") || msg.includes("permission")) {
-    console.error(
-      "\n請將試算表共用給：firebase-adminsdk-fbsvc@chunhsin-b2a9d.iam.gserviceaccount.com（檢視者）",
-    );
-  }
+  console.error("\n匯入失敗：", err instanceof Error ? err.message : err);
   process.exit(1);
 });
