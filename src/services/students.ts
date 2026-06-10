@@ -8,12 +8,19 @@ import { getDb } from "@/lib/firebase";
 import type { Group, SeatingState, Student } from "@/types";
 
 function mapStudentDoc(id: string, data: Record<string, unknown>): Student {
+  const bonusRaw = data.bonus;
+  const bonus =
+    bonusRaw != null && bonusRaw !== "" && !Number.isNaN(Number(bonusRaw))
+      ? Number(bonusRaw)
+      : undefined;
+
   return {
     id,
     group: String(data.group ?? ""),
     class: String(data.class ?? ""),
     number: String(data.number ?? ""),
     name: String(data.name ?? ""),
+    bonus,
   };
 }
 

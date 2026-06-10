@@ -5,6 +5,8 @@ export type Student = {
   class: string;
   number: string;
   name: string;
+  /** 試算表 E 欄累計加分 */
+  bonus?: number;
 };
 
 /** 分組（Firestore groups/{id}） */
@@ -15,7 +17,7 @@ export type Group = {
   studentCount?: number;
 };
 
-/** 座位狀態（Firestore groups/{id}/seating/state）— 僅讀取框架 */
+/** 座位狀態（Firestore groups/{id}/seating/state） */
 export type SeatingState = {
   rows: number;
   cols: number;
@@ -23,6 +25,7 @@ export type SeatingState = {
   fixedSeats: Record<string, Omit<Student, "id">>;
   draftFixedSeats?: Record<string, Omit<Student, "id">>;
   assignments: Record<string, Omit<Student, "id">>;
+  savedAt?: string;
   updatedAt?: string;
 };
 

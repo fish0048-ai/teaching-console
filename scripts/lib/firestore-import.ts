@@ -16,6 +16,7 @@ export type ImportStudent = {
   class: string;
   number: string;
   name: string;
+  bonus?: number;
 };
 
 export type ImportGroup = {
@@ -24,6 +25,7 @@ export type ImportGroup = {
   sheetLabel?: string;
   students: ImportStudent[];
   seating?: Record<string, unknown>;
+  seatingSavedAt?: string;
 };
 
 export type ImportReport = {
@@ -73,6 +75,10 @@ export function normalizeStudent(
     class: String(raw.class ?? "").trim(),
     number: String(raw.number ?? "").trim(),
     name,
+    bonus:
+      raw.bonus != null && raw.bonus !== "" && !Number.isNaN(Number(raw.bonus))
+        ? Number(raw.bonus)
+        : undefined,
   };
 }
 
@@ -198,6 +204,7 @@ export async function importGroupsToFirestore(
         class: s.class,
         number: s.number,
         name: s.name,
+        ...(s.bonus != null ? { bonus: s.bonus } : {}),
         importedAt: FieldValue.serverTimestamp(),
       });
       studentCount++;
@@ -207,6 +214,7 @@ export async function importGroupsToFirestore(
     if (group.seating) {
       await writer.set(groupRef.collection("seating").doc("state"), {
         ...group.seating,
+        ...(group.seatingSavedAt ? { savedAt: group.seatingSavedAt } : {}),
         updatedAt: new Date().toISOString(),
       });
       seatingCount++;
